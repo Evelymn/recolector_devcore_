@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'screens/registrar_cliente.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'screens/usuarios_page.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+final supabase = Supabase.instance.client;
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -17,7 +16,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: const DashboardRegistrarCliente(),
+      home: const UsuariosPage(),
     );
   }
 }
