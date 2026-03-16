@@ -1,11 +1,12 @@
 // ============================================================
 //  ARCHIVO: dashboard_registrar_cliente.dart
 //  DESCRIPCIÓN: Pantalla principal del Dashboard con formulario
-//  para registrar clientes.
+//  para registrar clientes, inspirada en el diseño de EcoRecolector.
+//  Incluye: menú lateral, tarjetas de estadísticas y formulario.
 // ============================================================
 
 import 'package:flutter/material.dart';
-// import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ─────────────────────────────────────────────────────────────
 // CONSTANTES DE COLOR
@@ -56,7 +57,7 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
 
   // ── Cliente de Supabase ───────────────────────────────────
   // Instancia global que ya fue inicializada en main.dart
-  // final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   // ── Limpiar controladores al destruir el widget ───────────
   // Evita fugas de memoria
@@ -84,17 +85,7 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
     try {
       // Inserta el nuevo cliente en Supabase
       // Ajusta los nombres de columna si difieren en tu tabla
-      // await _supabase.from('clientes').insert({
-      //   'nombre':    _nombreController.text.trim(),
-      //   'direccion': _direccionController.text.trim(),
-      //   'colonia':   _coloniaController.text.trim(),
-      //   'telefono':  _telefonoController.text.trim(),
-      //   'estado':    _estadoSeleccionado,
-      // });
-      await Future.delayed(const Duration(seconds: 1));
-
-      // DEBUG: mostrar datos en consola
-      print({
+      await _supabase.from('clientes').insert({
         'nombre': _nombreController.text.trim(),
         'direccion': _direccionController.text.trim(),
         'colonia': _coloniaController.text.trim(),
@@ -115,17 +106,16 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
 
       // Limpia todos los campos después de guardar
       _limpiarFormulario();
-
-      // } on PostgrestException catch (e) {
-      //   // Error proveniente de Supabase (ej. columna inexistente)
-      //   if (!mounted) return;
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     SnackBar(
-      //       content: Text('Error Supabase: ${e.message}'),
-      //       backgroundColor: Colors.red,
-      //       behavior: SnackBarBehavior.floating,
-      //     ),
-      //   );
+    } on PostgrestException catch (e) {
+      // Error proveniente de Supabase (ej. columna inexistente)
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error Supabase: ${e.message}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     } catch (e) {
       // Cualquier otro error inesperado
       if (!mounted) return;

@@ -9,7 +9,6 @@ class UsuariosPage extends StatefulWidget {
 }
 
 class _UsuariosPageState extends State<UsuariosPage> {
-
   final service = SupabaseService();
   List usuarios = [];
 
