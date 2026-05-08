@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../widgets/menulateral.dart';
 
 // ─────────────────────────────────────────────────────────────
 // CONSTANTES DE COLOR
@@ -177,6 +178,26 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
     );
   }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
   // ─────────────────────────────────────────────────────────
   // BUILD PRINCIPAL
   // Estructura: Row → [Menú lateral | Contenido principal]
@@ -191,7 +212,7 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
           // SECCIÓN 1: MENÚ LATERAL (Sidebar)
           // Siempre visible a la izquierda
           // ══════════════════════════════════════════════════
-          _MenuLateral(
+          MenuLateral(
             seleccionado: _menuSeleccionado,
             onItemTap: (index) => setState(() => _menuSeleccionado = index),
           ),
@@ -365,91 +386,6 @@ class _AppBarPersonalizado extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// WIDGET: _MenuLateral
-// Sidebar verde con los ítems de navegación.
-// Recibe el índice seleccionado y un callback al tocar un ítem.
-// ═══════════════════════════════════════════════════════════════
-class _MenuLateral extends StatelessWidget {
-  final int seleccionado;
-  final ValueChanged<int> onItemTap;
-
-  const _MenuLateral({required this.seleccionado, required this.onItemTap});
-
-  // Lista de ítems del menú: [ícono, etiqueta]
-  static const _items = [
-    [Icons.dashboard, 'Dashboard'],
-    [Icons.people, 'Clientes'],
-    [Icons.payment, 'Pagos\nEmpleados\nClientes'],
-    [Icons.badge, 'Empleados'],
-    [Icons.bar_chart, 'Reportes'],
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 110,
-      color: kVerdePrincipal,
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          // Genera cada ítem del menú con un loop
-          for (int i = 0; i < _items.length; i++)
-            _ItemMenu(
-              icono: _items[i][0] as IconData,
-              label: _items[i][1] as String,
-              seleccionado: seleccionado == i,
-              onTap: () => onItemTap(i),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Ítem individual del menú lateral ──────────────────────────
-class _ItemMenu extends StatelessWidget {
-  final IconData icono;
-  final String label;
-  final bool seleccionado;
-  final VoidCallback onTap;
-
-  const _ItemMenu({
-    required this.icono,
-    required this.label,
-    required this.seleccionado,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-        // El ítem seleccionado tiene fondo más oscuro
-        color:
-            seleccionado ? Colors.black.withOpacity(0.2) : Colors.transparent,
-        child: Column(
-          children: [
-            Icon(icono, color: kBlanco, size: 22),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: kBlanco,
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // ═══════════════════════════════════════════════════════════════
 // WIDGET: _ColumnaIzquierda
