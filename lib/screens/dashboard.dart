@@ -178,26 +178,6 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
     );
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
   // ─────────────────────────────────────────────────────────
   // BUILD PRINCIPAL
   // Estructura: Row → [Menú lateral | Contenido principal]
@@ -385,7 +365,6 @@ class _AppBarPersonalizado extends StatelessWidget {
     );
   }
 }
-
 
 // ═══════════════════════════════════════════════════════════════
 // WIDGET: _ColumnaIzquierda
