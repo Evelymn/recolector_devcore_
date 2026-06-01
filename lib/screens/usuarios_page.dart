@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
+import '../widgets/custom_appbar.dart';
 
 class UsuariosPage extends StatefulWidget {
   const UsuariosPage({super.key});
@@ -29,7 +30,7 @@ class _UsuariosPageState extends State<UsuariosPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Usuarios")),
+      appBar: const CustomAppBar(userName: "Eve"),
       body: ListView.builder(
         itemCount: usuarios.length,
         itemBuilder: (context, index) {

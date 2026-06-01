@@ -27,6 +27,7 @@ const Color kBlanco = Colors.white;
 // ─────────────────────────────────────────────────────────────
 class DashboardRegistrarCliente extends StatefulWidget {
   const DashboardRegistrarCliente({super.key});
+  
 
   @override
   State<DashboardRegistrarCliente> createState() =>
@@ -177,26 +178,6 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
       ),
     );
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
 
   // ─────────────────────────────────────────────────────────
   // BUILD PRINCIPAL
@@ -385,7 +366,6 @@ class _AppBarPersonalizado extends StatelessWidget {
     );
   }
 }
-
 
 // ═══════════════════════════════════════════════════════════════
 // WIDGET: _ColumnaIzquierda
