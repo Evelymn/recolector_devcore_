@@ -1,33 +1,27 @@
 // ============================================================
-//  ARCHIVO: dashboard_registrar_cliente.dart
-//  DESCRIPCIÓN: Pantalla principal del Dashboard con formulario
-//  para registrar clientes, inspirada en el diseño de EcoRecolector.
-//  Incluye: menú lateral, tarjetas de estadísticas y formulario.
+//  ARCHIVO: dashboard.dart
+//  DESCRIPCIÓN: Pantalla principal del Dashboard con navegación
+//  dinámica y formulario para registrar clientes.
 // ============================================================
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/menulateral.dart';
+import 'reportes_page.dart';  // Tu tabla
+import 'usuarios_page.dart';  // La lista de tu compañero
 
 // ─────────────────────────────────────────────────────────────
 // CONSTANTES DE COLOR
-// Centralizamos los colores aquí para cambiarlos fácilmente
 // ─────────────────────────────────────────────────────────────
-const Color kVerdePrincipal = Color(0xFF2E7D32); // Verde oscuro del menú
-const Color kVerdeBoton = Color(0xFF388E3C); // Verde del botón Guardar
-const Color kVerdeClaro = Color(0xFFE8F5E9); // Verde muy claro de fondo
-const Color kGrisBorde = Color(0xFFE0E0E0); // Gris suave para bordes
-const Color kGrisTexto = Color(0xFF616161); // Gris para texto secundario
+const Color kVerdePrincipal = Color(0xFF2E7D32);
+const Color kVerdeBoton = Color(0xFF388E3C);
+const Color kVerdeClaro = Color(0xFFE8F5E9);
+const Color kGrisBorde = Color(0xFFE0E0E0);
+const Color kGrisTexto = Color(0xFF616161);
 const Color kBlanco = Colors.white;
 
-// ─────────────────────────────────────────────────────────────
-// WIDGET PRINCIPAL: DashboardRegistrarCliente
-// Es un StatefulWidget porque necesita manejar el estado
-// del formulario (controladores, loading, etc.)
-// ─────────────────────────────────────────────────────────────
 class DashboardRegistrarCliente extends StatefulWidget {
   const DashboardRegistrarCliente({super.key});
-  
 
   @override
   State<DashboardRegistrarCliente> createState() =>
@@ -35,34 +29,21 @@ class DashboardRegistrarCliente extends StatefulWidget {
 }
 
 class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
-  // ── Clave del formulario ──────────────────────────────────
-  // Permite validar todos los campos de una sola vez
   final _formKey = GlobalKey<FormState>();
 
-  // ── Controladores de texto ────────────────────────────────
-  // Cada uno captura el texto que el usuario escribe en su campo
   final _nombreController = TextEditingController();
   final _direccionController = TextEditingController();
   final _coloniaController = TextEditingController();
   final _telefonoController = TextEditingController();
 
-  // ── Estado del dropdown ───────────────────────────────────
   String _estadoSeleccionado = 'Activo';
-
-  // ── Estado de carga ───────────────────────────────────────
-  // true = se está guardando en Supabase (muestra spinner)
   bool _isLoading = false;
 
-  // ── Índice del menú lateral seleccionado ─────────────────
   // 0=Dashboard, 1=Clientes, 2=Pagos, 3=Empleados, 4=Reportes
   int _menuSeleccionado = 0;
 
-  // ── Cliente de Supabase ───────────────────────────────────
-  // Instancia global que ya fue inicializada en main.dart
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // ── Limpiar controladores al destruir el widget ───────────
-  // Evita fugas de memoria
   @override
   void dispose() {
     _nombreController.dispose();
@@ -72,21 +53,11 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
     super.dispose();
   }
 
-  // ─────────────────────────────────────────────────────────
-  // MÉTODO: _guardarCliente
-  // Valida el formulario y, si todo está correcto,
-  // inserta el cliente en la tabla 'clientes' de Supabase.
-  // ─────────────────────────────────────────────────────────
   Future<void> _guardarCliente() async {
-    // Si algún campo está vacío, detiene y muestra errores
     if (!_formKey.currentState!.validate()) return;
-
-    // Activa el indicador de carga
     setState(() => _isLoading = true);
 
     try {
-      // Inserta el nuevo cliente en Supabase
-      // Ajusta los nombres de columna si difieren en tu tabla
       await _supabase.from('clientes').insert({
         'nombre': _nombreController.text.trim(),
         'direccion': _direccionController.text.trim(),
@@ -96,8 +67,6 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
       });
 
       if (!mounted) return;
-
-      // Muestra mensaje de éxito
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('✅ Cliente registrado correctamente'),
@@ -105,11 +74,8 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-
-      // Limpia todos los campos después de guardar
       _limpiarFormulario();
     } on PostgrestException catch (e) {
-      // Error proveniente de Supabase (ej. columna inexistente)
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -119,7 +85,6 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
         ),
       );
     } catch (e) {
-      // Cualquier otro error inesperado
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -129,15 +94,10 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
         ),
       );
     } finally {
-      // Siempre desactiva el spinner al terminar
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // ─────────────────────────────────────────────────────────
-  // MÉTODO: _limpiarFormulario
-  // Vacía todos los campos del formulario y resetea el estado
-  // ─────────────────────────────────────────────────────────
   void _limpiarFormulario() {
     _nombreController.clear();
     _direccionController.clear();
@@ -147,11 +107,6 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
     _formKey.currentState?.reset();
   }
 
-  // ─────────────────────────────────────────────────────────
-  // MÉTODO: _inputDecoration
-  // Devuelve la decoración visual estándar para cada TextField.
-  // Centralizado aquí para que todos los campos sean iguales.
-  // ─────────────────────────────────────────────────────────
   InputDecoration _inputDecoration(String placeholder) {
     return InputDecoration(
       hintText: placeholder,
@@ -180,8 +135,28 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
   }
 
   // ─────────────────────────────────────────────────────────
+  // AQUÍ ESTÁ EL SWITCH MÁGICO 
+  // ─────────────────────────────────────────────────────────
+  Widget _obtenerVistaActual() {
+    switch (_menuSeleccionado) {
+      case 0:
+        return _buildContenidoDashboard(); // Vista original del formulario
+      case 1:
+        return const UsuariosPage(); // ¡Tu vista de Clientes!
+      case 4:
+        return const ReportesPage(); // ¡Tu vista de Reportes!
+      default:
+        return const Center(
+          child: Text(
+            'Pantalla en construcción...',
+            style: TextStyle(fontSize: 18, color: kGrisTexto),
+          ),
+        );
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────
   // BUILD PRINCIPAL
-  // Estructura: Row → [Menú lateral | Contenido principal]
   // ─────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -189,88 +164,17 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
       backgroundColor: const Color(0xFFF5F5F5),
       body: Row(
         children: [
-          // ══════════════════════════════════════════════════
-          // SECCIÓN 1: MENÚ LATERAL (Sidebar)
-          // Siempre visible a la izquierda
-          // ══════════════════════════════════════════════════
           MenuLateral(
             seleccionado: _menuSeleccionado,
             onItemTap: (index) => setState(() => _menuSeleccionado = index),
           ),
-
-          // ══════════════════════════════════════════════════
-          // SECCIÓN 2: CONTENIDO PRINCIPAL
-          // Ocupa todo el espacio restante
-          // ══════════════════════════════════════════════════
           Expanded(
             child: Column(
               children: [
-                // ── AppBar personalizado ─────────────────
                 _AppBarPersonalizado(),
-
-                // ── Cuerpo scrolleable ───────────────────
+                // AQUÍ INYECTAMOS LA VISTA DINÁMICA
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Título de la sección
-                        const Text(
-                          'Dashboard',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF212121),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // ── Layout de dos columnas ───────
-                        // Izquierda: bienvenida + tarjetas + botón
-                        // Derecha: formulario de registro
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // ── COLUMNA IZQUIERDA ────────
-                            Expanded(
-                              flex: 5,
-                              child: _ColumnaIzquierda(
-                                onRegistrarTap: () {
-                                  // Cuando presiona "Registrar Cliente"
-                                  // hace scroll al formulario (derecha)
-                                  // En pantallas pequeñas puedes navegar
-                                  // a otra pantalla aquí
-                                },
-                              ),
-                            ),
-
-                            const SizedBox(width: 16),
-
-                            // ── COLUMNA DERECHA: FORMULARIO ──
-                            Expanded(
-                              flex: 5,
-                              child: _FormularioRegistro(
-                                formKey: _formKey,
-                                nombreController: _nombreController,
-                                direccionController: _direccionController,
-                                coloniaController: _coloniaController,
-                                telefonoController: _telefonoController,
-                                estadoSeleccionado: _estadoSeleccionado,
-                                isLoading: _isLoading,
-                                inputDecoration: _inputDecoration,
-                                onEstadoChanged:
-                                    (val) => setState(
-                                      () => _estadoSeleccionado = val!,
-                                    ),
-                                onGuardar: _guardarCliente,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: _obtenerVistaActual(),
                 ),
               ],
             ),
@@ -279,12 +183,62 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
       ),
     );
   }
+
+  // ─────────────────────────────────────────────────────────
+  // INTERFAZ ORIGINAL DEL DASHBOARD (Formulario)
+  // ─────────────────────────────────────────────────────────
+  Widget _buildContenidoDashboard() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Dashboard',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF212121),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 5,
+                child: _ColumnaIzquierda(
+                  onRegistrarTap: () {},
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 5,
+                child: _FormularioRegistro(
+                  formKey: _formKey,
+                  nombreController: _nombreController,
+                  direccionController: _direccionController,
+                  coloniaController: _coloniaController,
+                  telefonoController: _telefonoController,
+                  estadoSeleccionado: _estadoSeleccionado,
+                  isLoading: _isLoading,
+                  inputDecoration: _inputDecoration,
+                  onEstadoChanged: (val) => setState(() => _estadoSeleccionado = val!),
+                  onGuardar: _guardarCliente,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
-// WIDGET: _AppBarPersonalizado
-// Barra superior con logo, nombre de la app, campana y avatar
+// WIDGETS AUXILIARES
 // ═══════════════════════════════════════════════════════════════
+
 class _AppBarPersonalizado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -294,23 +248,16 @@ class _AppBarPersonalizado extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-          // Logo circular con ícono de reciclaje
           Container(
             width: 38,
             height: 38,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: kVerdeClaro,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.recycling,
-              color: kVerdePrincipal,
-              size: 20,
-            ),
+            child: const Icon(Icons.recycling, color: kVerdePrincipal, size: 20),
           ),
           const SizedBox(width: 10),
-
-          // Nombre de la app
           const Text(
             'EcoRecolector',
             style: TextStyle(
@@ -319,10 +266,7 @@ class _AppBarPersonalizado extends StatelessWidget {
               color: Color(0xFF212121),
             ),
           ),
-
           const Spacer(),
-
-          // Ícono de notificaciones con badge
           Stack(
             children: [
               const Icon(Icons.notifications_none, color: kGrisTexto, size: 26),
@@ -341,17 +285,15 @@ class _AppBarPersonalizado extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 16),
-
-          // Avatar del usuario + nombre
-          Row(
+          const Row(
             children: [
               CircleAvatar(
                 radius: 16,
                 backgroundColor: kGrisBorde,
-                child: const Icon(Icons.person, color: kGrisTexto, size: 18),
+                child: Icon(Icons.person, color: kGrisTexto, size: 18),
               ),
-              const SizedBox(width: 6),
-              const Text(
+              SizedBox(width: 6),
+              Text(
                 'Admin',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
@@ -367,14 +309,8 @@ class _AppBarPersonalizado extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// WIDGET: _ColumnaIzquierda
-// Contiene: saludo de bienvenida, tarjetas de estadísticas
-// y botón para registrar un cliente.
-// ═══════════════════════════════════════════════════════════════
 class _ColumnaIzquierda extends StatelessWidget {
   final VoidCallback onRegistrarTap;
-
   const _ColumnaIzquierda({required this.onRegistrarTap});
 
   @override
@@ -382,7 +318,6 @@ class _ColumnaIzquierda extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Saludo de bienvenida ─────────────────────────
         RichText(
           text: const TextSpan(
             style: TextStyle(fontSize: 14, color: Color(0xFF212121)),
@@ -396,36 +331,27 @@ class _ColumnaIzquierda extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-
-        // ── Tarjeta: Total Clientes Registrados ──────────
-        _TarjetaEstadistica(
+        const _TarjetaEstadistica(
           cantidad: '350',
           descripcion: 'Total Clientes Registrados',
           icono: Icons.people_alt,
           colorIcono: kVerdePrincipal,
         ),
         const SizedBox(height: 12),
-
-        // ── Tarjeta: Clientes Activos ────────────────────
-        _TarjetaEstadistica(
+        const _TarjetaEstadistica(
           cantidad: '300',
           descripcion: 'Clientes Activos',
           icono: Icons.check_circle_outline,
           colorIcono: Colors.blue,
         ),
         const SizedBox(height: 12),
-
-        // ── Tarjeta: Clientes Inactivos ──────────────────
-        _TarjetaEstadistica(
+        const _TarjetaEstadistica(
           cantidad: '50',
           descripcion: 'Clientes Inactivos',
           icono: Icons.person_off_outlined,
           colorIcono: Colors.orange,
         ),
         const SizedBox(height: 20),
-
-        // ── Botón Registrar Cliente ──────────────────────
-        // Con borde verde punteado, igual al diseño
         Container(
           decoration: BoxDecoration(
             border: Border.all(color: kVerdePrincipal, width: 1.5),
@@ -447,7 +373,6 @@ class _ColumnaIzquierda extends StatelessWidget {
   }
 }
 
-// ── Tarjeta de estadística individual ─────────────────────────
 class _TarjetaEstadistica extends StatelessWidget {
   final String cantidad;
   final String descripcion;
@@ -478,7 +403,6 @@ class _TarjetaEstadistica extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Número grande
           Text(
             cantidad,
             style: const TextStyle(
@@ -488,10 +412,8 @@ class _TarjetaEstadistica extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Ícono decorativo
           Icon(icono, color: colorIcono, size: 32),
           const SizedBox(width: 10),
-          // Descripción de la tarjeta
           Expanded(
             child: Text(
               descripcion,
@@ -504,29 +426,15 @@ class _TarjetaEstadistica extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// WIDGET: _FormularioRegistro
-// Columna derecha con el formulario completo de registro.
-// Recibe los controladores y callbacks del widget padre.
-// ═══════════════════════════════════════════════════════════════
 class _FormularioRegistro extends StatelessWidget {
-  // Clave para validación del formulario
   final GlobalKey<FormState> formKey;
-
-  // Controladores de los campos de texto
   final TextEditingController nombreController;
   final TextEditingController direccionController;
   final TextEditingController coloniaController;
   final TextEditingController telefonoController;
-
-  // Estado del dropdown y del botón
   final String estadoSeleccionado;
   final bool isLoading;
-
-  // Función que devuelve la decoración de cada campo
   final InputDecoration Function(String) inputDecoration;
-
-  // Callbacks al usuario interactuar
   final ValueChanged<String?> onEstadoChanged;
   final VoidCallback onGuardar;
 
@@ -563,19 +471,13 @@ class _FormularioRegistro extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Encabezado del formulario
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
                   'Dashboard/\nRegistrar cliente',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: kGrisTexto,
-                    height: 1.4,
-                  ),
+                  style: TextStyle(fontSize: 13, color: kGrisTexto, height: 1.4),
                 ),
-                // Botón verde "+ Registrar" en la esquina
                 ElevatedButton.icon(
                   onPressed: onGuardar,
                   icon: const Icon(Icons.add, size: 16),
@@ -583,83 +485,51 @@ class _FormularioRegistro extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kVerdeBoton,
                     foregroundColor: kBlanco,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     textStyle: const TextStyle(fontSize: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 18),
-
-            // ── Campo: Nombre ────────────────────────────
-            _EtiquetaCampo(texto: 'Nombre'),
+            const _EtiquetaCampo(texto: 'Nombre'),
             const SizedBox(height: 6),
             TextFormField(
               controller: nombreController,
               decoration: inputDecoration('Ingrese nombre del cliente'),
               textCapitalization: TextCapitalization.words,
-              // Validación: campo obligatorio
-              validator:
-                  (v) =>
-                      (v == null || v.trim().isEmpty)
-                          ? 'Campo obligatorio'
-                          : null,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
             ),
             const SizedBox(height: 15),
-
-            // ── Campo: Dirección ─────────────────────────
-            _EtiquetaCampo(texto: 'Dirección'),
+            const _EtiquetaCampo(texto: 'Dirección'),
             const SizedBox(height: 6),
             TextFormField(
               controller: direccionController,
               decoration: inputDecoration('Ingrese dirección'),
               textCapitalization: TextCapitalization.sentences,
-              validator:
-                  (v) =>
-                      (v == null || v.trim().isEmpty)
-                          ? 'Campo obligatorio'
-                          : null,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
             ),
             const SizedBox(height: 15),
-
-            // ── Campo: Colonia ───────────────────────────
-            _EtiquetaCampo(texto: 'Colonia'),
+            const _EtiquetaCampo(texto: 'Colonia'),
             const SizedBox(height: 6),
             TextFormField(
               controller: coloniaController,
               decoration: inputDecoration('Ingrese colonia'),
               textCapitalization: TextCapitalization.words,
-              validator:
-                  (v) =>
-                      (v == null || v.trim().isEmpty)
-                          ? 'Campo obligatorio'
-                          : null,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
             ),
             const SizedBox(height: 15),
-
-            // ── Campo: Teléfono ──────────────────────────
-            _EtiquetaCampo(texto: 'Teléfono'),
+            const _EtiquetaCampo(texto: 'Teléfono'),
             const SizedBox(height: 6),
             TextFormField(
               controller: telefonoController,
               decoration: inputDecoration('Ingrese teléfono'),
               keyboardType: TextInputType.phone,
-              validator:
-                  (v) =>
-                      (v == null || v.trim().isEmpty)
-                          ? 'Campo obligatorio'
-                          : null,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
             ),
             const SizedBox(height: 15),
-
-            // ── Campo: Estado (Dropdown) ─────────────────
-            _EtiquetaCampo(texto: 'Estado'),
+            const _EtiquetaCampo(texto: 'Estado'),
             const SizedBox(height: 6),
             DropdownButtonFormField<String>(
               value: estadoSeleccionado,
@@ -669,14 +539,9 @@ class _FormularioRegistro extends StatelessWidget {
                 DropdownMenuItem(value: 'Inactivo', child: Text('Inactivo')),
               ],
               onChanged: onEstadoChanged,
-              validator:
-                  (v) =>
-                      (v == null || v.isEmpty) ? 'Seleccione un estado' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Seleccione un estado' : null,
             ),
             const SizedBox(height: 24),
-
-            // ── Botón Guardar ────────────────────────────
-            // Centrado y de ancho completo
             Center(
               child: SizedBox(
                 width: 180,
@@ -687,30 +552,16 @@ class _FormularioRegistro extends StatelessWidget {
                     backgroundColor: kVerdeBoton,
                     foregroundColor: kBlanco,
                     disabledBackgroundColor: kVerdeBoton.withOpacity(0.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     elevation: 2,
                   ),
-                  child:
-                      isLoading
-                          // Spinner mientras guarda
-                          ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: kBlanco,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                          // Texto normal del botón
-                          : const Text(
-                            'Guardar',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: kBlanco, strokeWidth: 2.5),
+                        )
+                      : const Text('Guardar', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                 ),
               ),
             ),
@@ -721,8 +572,6 @@ class _FormularioRegistro extends StatelessWidget {
   }
 }
 
-// ── Etiqueta de cada campo del formulario ──────────────────────
-// Widget reutilizable para los títulos de los campos
 class _EtiquetaCampo extends StatelessWidget {
   final String texto;
   const _EtiquetaCampo({required this.texto});
@@ -739,4 +588,3 @@ class _EtiquetaCampo extends StatelessWidget {
     );
   }
 }
-//Comentario para verificar porque esta ventana no aparece en github
