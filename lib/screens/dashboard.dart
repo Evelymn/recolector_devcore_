@@ -7,8 +7,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/menulateral.dart';
-import 'reportes_page.dart';  // Tu tabla
-import 'usuarios_page.dart';  // La lista de tu compañero
+import 'reportes_page.dart'; // Tu tabla
+import 'usuarios_page.dart'; // La lista de tu compañero
 
 // ─────────────────────────────────────────────────────────────
 // CONSTANTES DE COLOR
@@ -44,6 +44,10 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
 
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  int totalClientes = 0;
+  int clientesActivos = 0;
+  int clientesInactivos = 0;
+
   @override
   void dispose() {
     _nombreController.dispose();
@@ -51,6 +55,29 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
     _coloniaController.dispose();
     _telefonoController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarEstadisticas();
+  }
+
+  Future<void> _cargarEstadisticas() async {
+    try {
+      final clientes = await _supabase.from('clientes').select();
+
+      totalClientes = clientes.length;
+
+      clientesActivos = clientes.where((c) => c['estado'] == 'Activo').length;
+
+      clientesInactivos =
+          clientes.where((c) => c['estado'] == 'Inactivo').length;
+
+      setState(() {});
+    } catch (e) {
+      debugPrint('Error: $e');
+    }
   }
 
   Future<void> _guardarCliente() async {
@@ -75,6 +102,7 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
         ),
       );
       _limpiarFormulario();
+      await _cargarEstadisticas();
     } on PostgrestException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -135,7 +163,7 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
   }
 
   // ─────────────────────────────────────────────────────────
-  // AQUÍ ESTÁ EL SWITCH MÁGICO 
+  // AQUÍ ESTÁ EL SWITCH MÁGICO
   // ─────────────────────────────────────────────────────────
   Widget _obtenerVistaActual() {
     switch (_menuSeleccionado) {
@@ -173,9 +201,7 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
               children: [
                 _AppBarPersonalizado(),
                 // AQUÍ INYECTAMOS LA VISTA DINÁMICA
-                Expanded(
-                  child: _obtenerVistaActual(),
-                ),
+                Expanded(child: _obtenerVistaActual()),
               ],
             ),
           ),
@@ -208,6 +234,9 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
               Expanded(
                 flex: 5,
                 child: _ColumnaIzquierda(
+                  totalClientes: totalClientes,
+                  clientesActivos: clientesActivos,
+                  clientesInactivos: clientesInactivos,
                   onRegistrarTap: () {},
                 ),
               ),
@@ -223,7 +252,8 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
                   estadoSeleccionado: _estadoSeleccionado,
                   isLoading: _isLoading,
                   inputDecoration: _inputDecoration,
-                  onEstadoChanged: (val) => setState(() => _estadoSeleccionado = val!),
+                  onEstadoChanged:
+                      (val) => setState(() => _estadoSeleccionado = val!),
                   onGuardar: _guardarCliente,
                 ),
               ),
@@ -255,7 +285,11 @@ class _AppBarPersonalizado extends StatelessWidget {
               color: kVerdeClaro,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.recycling, color: kVerdePrincipal, size: 20),
+            child: const Icon(
+              Icons.recycling,
+              color: kVerdePrincipal,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 10),
           const Text(
@@ -310,8 +344,17 @@ class _AppBarPersonalizado extends StatelessWidget {
 }
 
 class _ColumnaIzquierda extends StatelessWidget {
+  final int totalClientes;
+  final int clientesActivos;
+  final int clientesInactivos;
   final VoidCallback onRegistrarTap;
-  const _ColumnaIzquierda({required this.onRegistrarTap});
+
+  const _ColumnaIzquierda({
+    required this.totalClientes,
+    required this.clientesActivos,
+    required this.clientesInactivos,
+    required this.onRegistrarTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -331,22 +374,23 @@ class _ColumnaIzquierda extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        const _TarjetaEstadistica(
-          cantidad: '350',
+        _TarjetaEstadistica(
+
+            cantidad: totalClientes.toString(),
           descripcion: 'Total Clientes Registrados',
           icono: Icons.people_alt,
           colorIcono: kVerdePrincipal,
         ),
         const SizedBox(height: 12),
-        const _TarjetaEstadistica(
-          cantidad: '300',
+        _TarjetaEstadistica(
+            cantidad: clientesActivos.toString(),
           descripcion: 'Clientes Activos',
           icono: Icons.check_circle_outline,
           colorIcono: Colors.blue,
         ),
         const SizedBox(height: 12),
-        const _TarjetaEstadistica(
-          cantidad: '50',
+      _TarjetaEstadistica(
+           cantidad: clientesInactivos.toString(),
           descripcion: 'Clientes Inactivos',
           icono: Icons.person_off_outlined,
           colorIcono: Colors.orange,
@@ -476,7 +520,11 @@ class _FormularioRegistro extends StatelessWidget {
               children: [
                 const Text(
                   'Dashboard/\nRegistrar cliente',
-                  style: TextStyle(fontSize: 13, color: kGrisTexto, height: 1.4),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: kGrisTexto,
+                    height: 1.4,
+                  ),
                 ),
                 ElevatedButton.icon(
                   onPressed: onGuardar,
@@ -485,9 +533,14 @@ class _FormularioRegistro extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kVerdeBoton,
                     foregroundColor: kBlanco,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     textStyle: const TextStyle(fontSize: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ],
@@ -499,7 +552,11 @@ class _FormularioRegistro extends StatelessWidget {
               controller: nombreController,
               decoration: inputDecoration('Ingrese nombre del cliente'),
               textCapitalization: TextCapitalization.words,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
+              validator:
+                  (v) =>
+                      (v == null || v.trim().isEmpty)
+                          ? 'Campo obligatorio'
+                          : null,
             ),
             const SizedBox(height: 15),
             const _EtiquetaCampo(texto: 'Dirección'),
@@ -508,7 +565,11 @@ class _FormularioRegistro extends StatelessWidget {
               controller: direccionController,
               decoration: inputDecoration('Ingrese dirección'),
               textCapitalization: TextCapitalization.sentences,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
+              validator:
+                  (v) =>
+                      (v == null || v.trim().isEmpty)
+                          ? 'Campo obligatorio'
+                          : null,
             ),
             const SizedBox(height: 15),
             const _EtiquetaCampo(texto: 'Colonia'),
@@ -517,7 +578,11 @@ class _FormularioRegistro extends StatelessWidget {
               controller: coloniaController,
               decoration: inputDecoration('Ingrese colonia'),
               textCapitalization: TextCapitalization.words,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
+              validator:
+                  (v) =>
+                      (v == null || v.trim().isEmpty)
+                          ? 'Campo obligatorio'
+                          : null,
             ),
             const SizedBox(height: 15),
             const _EtiquetaCampo(texto: 'Teléfono'),
@@ -526,7 +591,11 @@ class _FormularioRegistro extends StatelessWidget {
               controller: telefonoController,
               decoration: inputDecoration('Ingrese teléfono'),
               keyboardType: TextInputType.phone,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
+              validator:
+                  (v) =>
+                      (v == null || v.trim().isEmpty)
+                          ? 'Campo obligatorio'
+                          : null,
             ),
             const SizedBox(height: 15),
             const _EtiquetaCampo(texto: 'Estado'),
@@ -539,7 +608,9 @@ class _FormularioRegistro extends StatelessWidget {
                 DropdownMenuItem(value: 'Inactivo', child: Text('Inactivo')),
               ],
               onChanged: onEstadoChanged,
-              validator: (v) => (v == null || v.isEmpty) ? 'Seleccione un estado' : null,
+              validator:
+                  (v) =>
+                      (v == null || v.isEmpty) ? 'Seleccione un estado' : null,
             ),
             const SizedBox(height: 24),
             Center(
@@ -552,16 +623,28 @@ class _FormularioRegistro extends StatelessWidget {
                     backgroundColor: kVerdeBoton,
                     foregroundColor: kBlanco,
                     disabledBackgroundColor: kVerdeBoton.withOpacity(0.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     elevation: 2,
                   ),
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(color: kBlanco, strokeWidth: 2.5),
-                        )
-                      : const Text('Guardar', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  child:
+                      isLoading
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: kBlanco,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                          : const Text(
+                            'Guardar',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                 ),
               ),
             ),
