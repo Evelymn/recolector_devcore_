@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+<<<<<<< HEAD
 import 'package:fl_chart/fl_chart.dart'; 
 
 import '../widgets/menulateral.dart';
@@ -13,6 +14,11 @@ import 'usuarios_page.dart';
 import 'empleados_page.dart'; 
 import 'pagos_page.dart';     
 import 'configuracion_page.dart'; 
+=======
+import '../widgets/menulateral.dart';
+import 'reportes_page.dart'; // Tu tabla
+import 'usuarios_page.dart'; // La lista de tu compañero
+>>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
 
 const Color kVerdePrincipal = Color(0xFF2E7D32);
 const Color kVerdeBoton = Color(0xFF388E3C);
@@ -42,6 +48,7 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
 
   final SupabaseClient _supabase = Supabase.instance.client;
 
+<<<<<<< HEAD
   // Variables para las estadísticas reales
   int _totalClientes = 0;
   double _ingresosMes = 0.0;
@@ -51,6 +58,11 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
     super.initState();
     _cargarEstadisticas(); // Cargar los datos reales al abrir
   }
+=======
+  int totalClientes = 0;
+  int clientesActivos = 0;
+  int clientesInactivos = 0;
+>>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
 
   @override
   void dispose() {
@@ -61,6 +73,7 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
     super.dispose();
   }
 
+<<<<<<< HEAD
   // --- FUNCIÓN MÁGICA PARA LEER ESTADÍSTICAS REALES ---
   Future<void> _cargarEstadisticas() async {
     try {
@@ -83,6 +96,28 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
       }
     } catch (e) {
       debugPrint('Error al cargar estadísticas: $e');
+=======
+  @override
+  void initState() {
+    super.initState();
+    _cargarEstadisticas();
+  }
+
+  Future<void> _cargarEstadisticas() async {
+    try {
+      final clientes = await _supabase.from('clientes').select();
+
+      totalClientes = clientes.length;
+
+      clientesActivos = clientes.where((c) => c['estado'] == 'Activo').length;
+
+      clientesInactivos =
+          clientes.where((c) => c['estado'] == 'Inactivo').length;
+
+      setState(() {});
+    } catch (e) {
+      debugPrint('Error: $e');
+>>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
     }
   }
 
@@ -108,7 +143,20 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
         ),
       );
       _limpiarFormulario();
+<<<<<<< HEAD
       _cargarEstadisticas(); // <--- Actualizamos los números después de guardar
+=======
+      await _cargarEstadisticas();
+    } on PostgrestException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error Supabase: ${e.message}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+>>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -143,6 +191,12 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
     );
   }
 
+<<<<<<< HEAD
+=======
+  // ─────────────────────────────────────────────────────────
+  // AQUÍ ESTÁ EL SWITCH MÁGICO
+  // ─────────────────────────────────────────────────────────
+>>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
   Widget _obtenerVistaActual() {
     switch (_menuSeleccionado) {
       case 0: return _buildContenidoDashboard(); 
@@ -172,7 +226,12 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
           Expanded(
             child: Column(
               children: [
+<<<<<<< HEAD
                 const _AppBarPersonalizado(),
+=======
+                _AppBarPersonalizado(),
+                // AQUÍ INYECTAMOS LA VISTA DINÁMICA
+>>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
                 Expanded(child: _obtenerVistaActual()),
               ],
             ),
@@ -209,6 +268,9 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
               Expanded(
                 flex: 6,
                 child: _ColumnaIzquierda(
+                  totalClientes: totalClientes,
+                  clientesActivos: clientesActivos,
+                  clientesInactivos: clientesInactivos,
                   onRegistrarTap: () {},
                   totalClientes: _totalClientes.toString(), // <--- Pasamos el dato real
                   ingresosMes: 'Q ${_ingresosMes.toStringAsFixed(2)}', // <--- Pasamos el dato real formateado
@@ -226,7 +288,8 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
                   estadoSeleccionado: _estadoSeleccionado,
                   isLoading: _isLoading,
                   inputDecoration: _inputDecoration,
-                  onEstadoChanged: (val) => setState(() => _estadoSeleccionado = val!),
+                  onEstadoChanged:
+                      (val) => setState(() => _estadoSeleccionado = val!),
                   onGuardar: _guardarCliente,
                 ),
               ),
@@ -248,7 +311,23 @@ class _AppBarPersonalizado extends StatelessWidget {
       height: 60, color: kBlanco, padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
+<<<<<<< HEAD
           Container(width: 38, height: 38, decoration: const BoxDecoration(color: kVerdeClaro, shape: BoxShape.circle), child: const Icon(Icons.recycling, color: kVerdePrincipal, size: 20)),
+=======
+          Container(
+            width: 38,
+            height: 38,
+            decoration: const BoxDecoration(
+              color: kVerdeClaro,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.recycling,
+              color: kVerdePrincipal,
+              size: 20,
+            ),
+          ),
+>>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
           const SizedBox(width: 10),
           const Text('EcoRecolector', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF212121))),
           const Spacer(),
@@ -262,7 +341,11 @@ class _AppBarPersonalizado extends StatelessWidget {
 }
 
 class _ColumnaIzquierda extends StatelessWidget {
+  final int totalClientes;
+  final int clientesActivos;
+  final int clientesInactivos;
   final VoidCallback onRegistrarTap;
+<<<<<<< HEAD
   final String totalClientes;
   final String ingresosMes;
 
@@ -270,6 +353,14 @@ class _ColumnaIzquierda extends StatelessWidget {
     required this.onRegistrarTap,
     required this.totalClientes,
     required this.ingresosMes,
+=======
+
+  const _ColumnaIzquierda({
+    required this.totalClientes,
+    required this.clientesActivos,
+    required this.clientesInactivos,
+    required this.onRegistrarTap,
+>>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
   });
 
   @override
@@ -283,6 +374,31 @@ class _ColumnaIzquierda extends StatelessWidget {
             children: [TextSpan(text: 'Bienvenido, '), TextSpan(text: 'Administrador', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)))],
           ),
         ),
+<<<<<<< HEAD
+=======
+        const SizedBox(height: 16),
+        _TarjetaEstadistica(
+
+            cantidad: totalClientes.toString(),
+          descripcion: 'Total Clientes Registrados',
+          icono: Icons.people_alt,
+          colorIcono: kVerdePrincipal,
+        ),
+        const SizedBox(height: 12),
+        _TarjetaEstadistica(
+            cantidad: clientesActivos.toString(),
+          descripcion: 'Clientes Activos',
+          icono: Icons.check_circle_outline,
+          colorIcono: Colors.blue,
+        ),
+        const SizedBox(height: 12),
+      _TarjetaEstadistica(
+           cantidad: clientesInactivos.toString(),
+          descripcion: 'Clientes Inactivos',
+          icono: Icons.person_off_outlined,
+          colorIcono: Colors.orange,
+        ),
+>>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
         const SizedBox(height: 20),
         Row(
           children: [
@@ -423,6 +539,7 @@ class _FormularioRegistro extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
+<<<<<<< HEAD
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const _EtiquetaCampo(texto: 'Teléfono'), const SizedBox(height: 8), TextFormField(controller: telefonoController, decoration: inputDecoration('Ej. 5555-0000'), keyboardType: TextInputType.phone, validator: (v) => (v == null || v.trim().isEmpty) ? 'Obligatorio' : null)])),
                 const SizedBox(width: 16),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const _EtiquetaCampo(texto: 'Estado'), const SizedBox(height: 8), DropdownButtonFormField<String>(value: estadoSeleccionado, decoration: inputDecoration(''), items: const [DropdownMenuItem(value: 'Activo', child: Text('Activo')), DropdownMenuItem(value: 'Inactivo', child: Text('Inactivo'))], onChanged: onEstadoChanged, validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null)])),
@@ -435,6 +552,136 @@ class _FormularioRegistro extends StatelessWidget {
                 onPressed: isLoading ? null : onGuardar,
                 style: ElevatedButton.styleFrom(backgroundColor: kVerdeBoton, foregroundColor: kBlanco, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 1),
                 child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: kBlanco, strokeWidth: 2.5)) : const Text('Guardar Cliente', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+=======
+                const Text(
+                  'Dashboard/\nRegistrar cliente',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: kGrisTexto,
+                    height: 1.4,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: onGuardar,
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('Registrar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kVerdeBoton,
+                    foregroundColor: kBlanco,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    textStyle: const TextStyle(fontSize: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            const _EtiquetaCampo(texto: 'Nombre'),
+            const SizedBox(height: 6),
+            TextFormField(
+              controller: nombreController,
+              decoration: inputDecoration('Ingrese nombre del cliente'),
+              textCapitalization: TextCapitalization.words,
+              validator:
+                  (v) =>
+                      (v == null || v.trim().isEmpty)
+                          ? 'Campo obligatorio'
+                          : null,
+            ),
+            const SizedBox(height: 15),
+            const _EtiquetaCampo(texto: 'Dirección'),
+            const SizedBox(height: 6),
+            TextFormField(
+              controller: direccionController,
+              decoration: inputDecoration('Ingrese dirección'),
+              textCapitalization: TextCapitalization.sentences,
+              validator:
+                  (v) =>
+                      (v == null || v.trim().isEmpty)
+                          ? 'Campo obligatorio'
+                          : null,
+            ),
+            const SizedBox(height: 15),
+            const _EtiquetaCampo(texto: 'Colonia'),
+            const SizedBox(height: 6),
+            TextFormField(
+              controller: coloniaController,
+              decoration: inputDecoration('Ingrese colonia'),
+              textCapitalization: TextCapitalization.words,
+              validator:
+                  (v) =>
+                      (v == null || v.trim().isEmpty)
+                          ? 'Campo obligatorio'
+                          : null,
+            ),
+            const SizedBox(height: 15),
+            const _EtiquetaCampo(texto: 'Teléfono'),
+            const SizedBox(height: 6),
+            TextFormField(
+              controller: telefonoController,
+              decoration: inputDecoration('Ingrese teléfono'),
+              keyboardType: TextInputType.phone,
+              validator:
+                  (v) =>
+                      (v == null || v.trim().isEmpty)
+                          ? 'Campo obligatorio'
+                          : null,
+            ),
+            const SizedBox(height: 15),
+            const _EtiquetaCampo(texto: 'Estado'),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<String>(
+              value: estadoSeleccionado,
+              decoration: inputDecoration(''),
+              items: const [
+                DropdownMenuItem(value: 'Activo', child: Text('Activo')),
+                DropdownMenuItem(value: 'Inactivo', child: Text('Inactivo')),
+              ],
+              onChanged: onEstadoChanged,
+              validator:
+                  (v) =>
+                      (v == null || v.isEmpty) ? 'Seleccione un estado' : null,
+            ),
+            const SizedBox(height: 24),
+            Center(
+              child: SizedBox(
+                width: 180,
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : onGuardar,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kVerdeBoton,
+                    foregroundColor: kBlanco,
+                    disabledBackgroundColor: kVerdeBoton.withOpacity(0.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 2,
+                  ),
+                  child:
+                      isLoading
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: kBlanco,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                          : const Text(
+                            'Guardar',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                ),
+>>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
               ),
             ),
           ],
@@ -445,6 +692,24 @@ class _FormularioRegistro extends StatelessWidget {
 }
 
 class _EtiquetaCampo extends StatelessWidget {
+<<<<<<< HEAD
   final String texto; const _EtiquetaCampo({required this.texto});
   @override Widget build(BuildContext context) { return Text(texto, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF616161))); }
 }
+=======
+  final String texto;
+  const _EtiquetaCampo({required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      texto,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF424242),
+      ),
+    );
+  }
+}
+>>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
