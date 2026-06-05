@@ -1,18 +1,19 @@
 // ============================================================
 //  ARCHIVO: dashboard.dart
-//  DESCRIPCIÓN: Pantalla principal del Dashboard con navegación
-//  dinámica y formulario para registrar clientes.
+//  DESCRIPCIÓN: Pantalla principal con estadísticas en TIEMPO REAL
 // ============================================================
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../widgets/menulateral.dart';
-import 'reportes_page.dart';  // Tu tabla
-import 'usuarios_page.dart';  // La lista de tu compañero
+import 'package:fl_chart/fl_chart.dart'; 
 
-// ─────────────────────────────────────────────────────────────
-// CONSTANTES DE COLOR
-// ─────────────────────────────────────────────────────────────
+import '../widgets/menulateral.dart';
+import 'reportes_page.dart';  
+import 'usuarios_page.dart';  
+import 'empleados_page.dart'; 
+import 'pagos_page.dart';     
+import 'configuracion_page.dart'; 
+
 const Color kVerdePrincipal = Color(0xFF2E7D32);
 const Color kVerdeBoton = Color(0xFF388E3C);
 const Color kVerdeClaro = Color(0xFFE8F5E9);
@@ -24,8 +25,7 @@ class DashboardRegistrarCliente extends StatefulWidget {
   const DashboardRegistrarCliente({super.key});
 
   @override
-  State<DashboardRegistrarCliente> createState() =>
-      _DashboardRegistrarClienteState();
+  State<DashboardRegistrarCliente> createState() => _DashboardRegistrarClienteState();
 }
 
 class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
@@ -38,11 +38,19 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
 
   String _estadoSeleccionado = 'Activo';
   bool _isLoading = false;
-
-  // 0=Dashboard, 1=Clientes, 2=Pagos, 3=Empleados, 4=Reportes
   int _menuSeleccionado = 0;
 
   final SupabaseClient _supabase = Supabase.instance.client;
+
+  // Variables para las estadísticas reales
+  int _totalClientes = 0;
+  double _ingresosMes = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarEstadisticas(); // Cargar los datos reales al abrir
+  }
 
   @override
   void dispose() {
@@ -51,6 +59,31 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
     _coloniaController.dispose();
     _telefonoController.dispose();
     super.dispose();
+  }
+
+  // --- FUNCIÓN MÁGICA PARA LEER ESTADÍSTICAS REALES ---
+  Future<void> _cargarEstadisticas() async {
+    try {
+      // 1. Contar los clientes
+      final clientesData = await _supabase.from('clientes').select('id');
+      
+      // 2. Sumar los pagos completados
+      final pagosData = await _supabase.from('pagos').select('monto').eq('estado', 'Completado');
+      
+      double sumaPagos = 0;
+      for (var pago in pagosData) {
+        sumaPagos += double.tryParse(pago['monto'].toString()) ?? 0.0;
+      }
+
+      if (mounted) {
+        setState(() {
+          _totalClientes = clientesData.length;
+          _ingresosMes = sumaPagos;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error al cargar estadísticas: $e');
+    }
   }
 
   Future<void> _guardarCliente() async {
@@ -75,23 +108,11 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
         ),
       );
       _limpiarFormulario();
-    } on PostgrestException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error Supabase: ${e.message}'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _cargarEstadisticas(); // <--- Actualizamos los números después de guardar
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error inesperado: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -115,49 +136,25 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
       fillColor: kBlanco,
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: kGrisBorde),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: kVerdePrincipal, width: 1.8),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.red),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.red, width: 1.8),
-      ),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: kGrisBorde)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: kVerdePrincipal, width: 1.8)),
+      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.red)),
+      focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.red, width: 1.8)),
     );
   }
 
-  // ─────────────────────────────────────────────────────────
-  // AQUÍ ESTÁ EL SWITCH MÁGICO 
-  // ─────────────────────────────────────────────────────────
   Widget _obtenerVistaActual() {
     switch (_menuSeleccionado) {
-      case 0:
-        return _buildContenidoDashboard(); // Vista original del formulario
-      case 1:
-        return const UsuariosPage(); // ¡Tu vista de Clientes!
-      case 4:
-        return const ReportesPage(); // ¡Tu vista de Reportes!
-      default:
-        return const Center(
-          child: Text(
-            'Pantalla en construcción...',
-            style: TextStyle(fontSize: 18, color: kGrisTexto),
-          ),
-        );
+      case 0: return _buildContenidoDashboard(); 
+      case 1: return const UsuariosPage(); 
+      case 2: return const PagosPage(); 
+      case 3: return const EmpleadosPage(); 
+      case 4: return const ReportesPage(); 
+      case 5: return const ConfiguracionPage(); 
+      default: return const Center(child: Text('Pantalla en construcción...'));
     }
   }
 
-  // ─────────────────────────────────────────────────────────
-  // BUILD PRINCIPAL
-  // ─────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -166,16 +163,17 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
         children: [
           MenuLateral(
             seleccionado: _menuSeleccionado,
-            onItemTap: (index) => setState(() => _menuSeleccionado = index),
+            onItemTap: (index) {
+              setState(() => _menuSeleccionado = index);
+              // Si volvemos al dashboard, refrescamos los números por si alguien pagó o se borró en otra pantalla
+              if (index == 0) _cargarEstadisticas(); 
+            },
           ),
           Expanded(
             child: Column(
               children: [
-                _AppBarPersonalizado(),
-                // AQUÍ INYECTAMOS LA VISTA DINÁMICA
-                Expanded(
-                  child: _obtenerVistaActual(),
-                ),
+                const _AppBarPersonalizado(),
+                Expanded(child: _obtenerVistaActual()),
               ],
             ),
           ),
@@ -184,36 +182,41 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────
-  // INTERFAZ ORIGINAL DEL DASHBOARD (Formulario)
-  // ─────────────────────────────────────────────────────────
   Widget _buildContenidoDashboard() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Dashboard',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF212121),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Dashboard General',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF212121)),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh, color: kVerdePrincipal),
+                tooltip: 'Actualizar Estadísticas',
+                onPressed: _cargarEstadisticas,
+              )
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                flex: 5,
+                flex: 6,
                 child: _ColumnaIzquierda(
                   onRegistrarTap: () {},
+                  totalClientes: _totalClientes.toString(), // <--- Pasamos el dato real
+                  ingresosMes: 'Q ${_ingresosMes.toStringAsFixed(2)}', // <--- Pasamos el dato real formateado
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 20),
               Expanded(
-                flex: 5,
+                flex: 4,
                 child: _FormularioRegistro(
                   formKey: _formKey,
                   nombreController: _nombreController,
@@ -236,73 +239,22 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// WIDGETS AUXILIARES
-// ═══════════════════════════════════════════════════════════════
 
 class _AppBarPersonalizado extends StatelessWidget {
+  const _AppBarPersonalizado();
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 60,
-      color: kBlanco,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      height: 60, color: kBlanco, padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: const BoxDecoration(
-              color: kVerdeClaro,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.recycling, color: kVerdePrincipal, size: 20),
-          ),
+          Container(width: 38, height: 38, decoration: const BoxDecoration(color: kVerdeClaro, shape: BoxShape.circle), child: const Icon(Icons.recycling, color: kVerdePrincipal, size: 20)),
           const SizedBox(width: 10),
-          const Text(
-            'EcoRecolector',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              color: Color(0xFF212121),
-            ),
-          ),
+          const Text('EcoRecolector', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF212121))),
           const Spacer(),
-          Stack(
-            children: [
-              const Icon(Icons.notifications_none, color: kGrisTexto, size: 26),
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          Stack(children: [const Icon(Icons.notifications_none, color: kGrisTexto, size: 26), Positioned(right: 0, top: 0, child: Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle)))]),
           const SizedBox(width: 16),
-          const Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: kGrisBorde,
-                child: Icon(Icons.person, color: kGrisTexto, size: 18),
-              ),
-              SizedBox(width: 6),
-              Text(
-                'Admin',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: Color(0xFF212121),
-                ),
-              ),
-            ],
-          ),
+          const Row(children: [CircleAvatar(radius: 16, backgroundColor: kGrisBorde, child: Icon(Icons.person, color: kGrisTexto, size: 18)), SizedBox(width: 6), Text('Administrador', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF212121)))]),
         ],
       ),
     );
@@ -311,7 +263,14 @@ class _AppBarPersonalizado extends StatelessWidget {
 
 class _ColumnaIzquierda extends StatelessWidget {
   final VoidCallback onRegistrarTap;
-  const _ColumnaIzquierda({required this.onRegistrarTap});
+  final String totalClientes;
+  final String ingresosMes;
+
+  const _ColumnaIzquierda({
+    required this.onRegistrarTap,
+    required this.totalClientes,
+    required this.ingresosMes,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -320,104 +279,46 @@ class _ColumnaIzquierda extends StatelessWidget {
       children: [
         RichText(
           text: const TextSpan(
-            style: TextStyle(fontSize: 14, color: Color(0xFF212121)),
-            children: [
-              TextSpan(text: 'Bienvenido: '),
-              TextSpan(
-                text: 'Admin',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
+            style: TextStyle(fontSize: 16, color: Color(0xFF212121)),
+            children: [TextSpan(text: 'Bienvenido, '), TextSpan(text: 'Administrador', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)))],
           ),
-        ),
-        const SizedBox(height: 16),
-        const _TarjetaEstadistica(
-          cantidad: '350',
-          descripcion: 'Total Clientes Registrados',
-          icono: Icons.people_alt,
-          colorIcono: kVerdePrincipal,
-        ),
-        const SizedBox(height: 12),
-        const _TarjetaEstadistica(
-          cantidad: '300',
-          descripcion: 'Clientes Activos',
-          icono: Icons.check_circle_outline,
-          colorIcono: Colors.blue,
-        ),
-        const SizedBox(height: 12),
-        const _TarjetaEstadistica(
-          cantidad: '50',
-          descripcion: 'Clientes Inactivos',
-          icono: Icons.person_off_outlined,
-          colorIcono: Colors.orange,
         ),
         const SizedBox(height: 20),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: kVerdePrincipal, width: 1.5),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: TextButton(
-            onPressed: onRegistrarTap,
-            child: const Text(
-              'Registrar Cliente',
-              style: TextStyle(
-                color: kVerdePrincipal,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+        Row(
+          children: [
+            Expanded(child: _TarjetaEstadistica(cantidad: totalClientes, descripcion: 'Clientes Registrados', icono: Icons.people_alt, colorIcono: kVerdePrincipal)),
+            const SizedBox(width: 16),
+            Expanded(child: _TarjetaEstadistica(cantidad: ingresosMes, descripcion: 'Ingresos Totales', icono: Icons.monetization_on_outlined, colorIcono: Colors.blue)),
+          ],
         ),
+        const SizedBox(height: 24),
+        const _GraficaIngresosGastos(),
+        const SizedBox(height: 24),
       ],
     );
   }
 }
 
 class _TarjetaEstadistica extends StatelessWidget {
-  final String cantidad;
-  final String descripcion;
-  final IconData icono;
-  final Color colorIcono;
-
-  const _TarjetaEstadistica({
-    required this.cantidad,
-    required this.descripcion,
-    required this.icono,
-    required this.colorIcono,
-  });
+  final String cantidad; final String descripcion; final IconData icono; final Color colorIcono;
+  const _TarjetaEstadistica({required this.cantidad, required this.descripcion, required this.icono, required this.colorIcono});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: kBlanco,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: kBlanco, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))]),
       child: Row(
         children: [
-          Text(
-            cantidad,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF212121),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Icon(icono, color: colorIcono, size: 32),
-          const SizedBox(width: 10),
+          Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: colorIcono.withOpacity(0.1), shape: BoxShape.circle), child: Icon(icono, color: colorIcono, size: 28)),
+          const SizedBox(width: 16),
           Expanded(
-            child: Text(
-              descripcion,
-              style: const TextStyle(fontSize: 11, color: kGrisTexto),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(cantidad, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF212121))),
+                Text(descripcion, style: const TextStyle(fontSize: 12, color: kGrisTexto)),
+              ],
             ),
           ),
         ],
@@ -426,143 +327,114 @@ class _TarjetaEstadistica extends StatelessWidget {
   }
 }
 
-class _FormularioRegistro extends StatelessWidget {
-  final GlobalKey<FormState> formKey;
-  final TextEditingController nombreController;
-  final TextEditingController direccionController;
-  final TextEditingController coloniaController;
-  final TextEditingController telefonoController;
-  final String estadoSeleccionado;
-  final bool isLoading;
-  final InputDecoration Function(String) inputDecoration;
-  final ValueChanged<String?> onEstadoChanged;
-  final VoidCallback onGuardar;
-
-  const _FormularioRegistro({
-    required this.formKey,
-    required this.nombreController,
-    required this.direccionController,
-    required this.coloniaController,
-    required this.telefonoController,
-    required this.estadoSeleccionado,
-    required this.isLoading,
-    required this.inputDecoration,
-    required this.onEstadoChanged,
-    required this.onGuardar,
-  });
+class _GraficaIngresosGastos extends StatelessWidget {
+  const _GraficaIngresosGastos();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: kBlanco,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+      height: 360,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Balance Financiero (Últimos 6 meses)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF212121))),
+          const SizedBox(height: 35),
+          Expanded(
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.center, groupsSpace: 45, maxY: 20,
+                barTouchData: BarTouchData(enabled: true, touchTooltipData: BarTouchTooltipData(getTooltipColor: (group) => Colors.blueGrey[800]!)),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (double value, TitleMeta meta) {
+                        const style = TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 13);
+                        Widget text;
+                        switch (value.toInt()) {
+                          case 0: text = const Text('Ene', style: style); break;
+                          case 1: text = const Text('Feb', style: style); break;
+                          case 2: text = const Text('Mar', style: style); break;
+                          case 3: text = const Text('Abr', style: style); break;
+                          case 4: text = const Text('May', style: style); break;
+                          case 5: text = const Text('Jun', style: style); break;
+                          default: text = const Text('', style: style); break;
+                        }
+                        return Padding(padding: const EdgeInsets.only(top: 8.0), child: text);
+                      },
+                    ),
+                  ),
+                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 5, getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey[200], strokeWidth: 1, dashArray: [5, 5])),
+                borderData: FlBorderData(show: false),
+                barGroups: [
+                  _makeGroupData(0, 15, 10), _makeGroupData(1, 18, 12), _makeGroupData(2, 14, 11), _makeGroupData(3, 16, 14), _makeGroupData(4, 19, 13), _makeGroupData(5, 12, 8),
+                ],
+              ),
+            ),
           ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(width: 14, height: 14, decoration: BoxDecoration(color: const Color(0xFF2E7D32), borderRadius: BorderRadius.circular(3)), margin: const EdgeInsets.only(right: 8)),
+              const Text('Ingresos', style: TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w600)),
+              const SizedBox(width: 30),
+              Container(width: 14, height: 14, decoration: BoxDecoration(color: Colors.red[400], borderRadius: BorderRadius.circular(3)), margin: const EdgeInsets.only(right: 8)),
+              const Text('Gastos Operativos', style: TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w600)),
+            ],
+          )
         ],
       ),
+    );
+  }
+
+  BarChartGroupData _makeGroupData(int x, double y1, double y2) {
+    return BarChartGroupData(x: x, barRods: [BarChartRodData(toY: y1, color: const Color(0xFF2E7D32), width: 22, borderRadius: BorderRadius.circular(6)), BarChartRodData(toY: y2, color: Colors.red[400], width: 22, borderRadius: BorderRadius.circular(6))]);
+  }
+}
+
+class _FormularioRegistro extends StatelessWidget {
+  final GlobalKey<FormState> formKey; final TextEditingController nombreController; final TextEditingController direccionController; final TextEditingController coloniaController; final TextEditingController telefonoController; final String estadoSeleccionado; final bool isLoading; final InputDecoration Function(String) inputDecoration; final ValueChanged<String?> onEstadoChanged; final VoidCallback onGuardar;
+  const _FormularioRegistro({required this.formKey, required this.nombreController, required this.direccionController, required this.coloniaController, required this.telefonoController, required this.estadoSeleccionado, required this.isLoading, required this.inputDecoration, required this.onEstadoChanged, required this.onGuardar});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24), decoration: BoxDecoration(color: kBlanco, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))]),
       child: Form(
         key: formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text('Formulario Rápido', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF212121))),
+            const SizedBox(height: 20),
+            const _EtiquetaCampo(texto: 'Nombre Completo'), const SizedBox(height: 8),
+            TextFormField(controller: nombreController, decoration: inputDecoration('Ej. Juan Pérez'), textCapitalization: TextCapitalization.words, validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null),
+            const SizedBox(height: 16),
+            const _EtiquetaCampo(texto: 'Dirección'), const SizedBox(height: 8),
+            TextFormField(controller: direccionController, decoration: inputDecoration('Ej. 5ta Avenida 4-32'), textCapitalization: TextCapitalization.sentences, validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null),
+            const SizedBox(height: 16),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Dashboard/\nRegistrar cliente',
-                  style: TextStyle(fontSize: 13, color: kGrisTexto, height: 1.4),
-                ),
-                ElevatedButton.icon(
-                  onPressed: onGuardar,
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Registrar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kVerdeBoton,
-                    foregroundColor: kBlanco,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    textStyle: const TextStyle(fontSize: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const _EtiquetaCampo(texto: 'Teléfono'), const SizedBox(height: 8), TextFormField(controller: telefonoController, decoration: inputDecoration('Ej. 5555-0000'), keyboardType: TextInputType.phone, validator: (v) => (v == null || v.trim().isEmpty) ? 'Obligatorio' : null)])),
+                const SizedBox(width: 16),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const _EtiquetaCampo(texto: 'Estado'), const SizedBox(height: 8), DropdownButtonFormField<String>(value: estadoSeleccionado, decoration: inputDecoration(''), items: const [DropdownMenuItem(value: 'Activo', child: Text('Activo')), DropdownMenuItem(value: 'Inactivo', child: Text('Inactivo'))], onChanged: onEstadoChanged, validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null)])),
               ],
             ),
-            const SizedBox(height: 18),
-            const _EtiquetaCampo(texto: 'Nombre'),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: nombreController,
-              decoration: inputDecoration('Ingrese nombre del cliente'),
-              textCapitalization: TextCapitalization.words,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
-            ),
-            const SizedBox(height: 15),
-            const _EtiquetaCampo(texto: 'Dirección'),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: direccionController,
-              decoration: inputDecoration('Ingrese dirección'),
-              textCapitalization: TextCapitalization.sentences,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
-            ),
-            const SizedBox(height: 15),
-            const _EtiquetaCampo(texto: 'Colonia'),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: coloniaController,
-              decoration: inputDecoration('Ingrese colonia'),
-              textCapitalization: TextCapitalization.words,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
-            ),
-            const SizedBox(height: 15),
-            const _EtiquetaCampo(texto: 'Teléfono'),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: telefonoController,
-              decoration: inputDecoration('Ingrese teléfono'),
-              keyboardType: TextInputType.phone,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obligatorio' : null,
-            ),
-            const SizedBox(height: 15),
-            const _EtiquetaCampo(texto: 'Estado'),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<String>(
-              value: estadoSeleccionado,
-              decoration: inputDecoration(''),
-              items: const [
-                DropdownMenuItem(value: 'Activo', child: Text('Activo')),
-                DropdownMenuItem(value: 'Inactivo', child: Text('Inactivo')),
-              ],
-              onChanged: onEstadoChanged,
-              validator: (v) => (v == null || v.isEmpty) ? 'Seleccione un estado' : null,
-            ),
-            const SizedBox(height: 24),
-            Center(
-              child: SizedBox(
-                width: 180,
-                height: 46,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : onGuardar,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kVerdeBoton,
-                    foregroundColor: kBlanco,
-                    disabledBackgroundColor: kVerdeBoton.withOpacity(0.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    elevation: 2,
-                  ),
-                  child: isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(color: kBlanco, strokeWidth: 2.5),
-                        )
-                      : const Text('Guardar', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity, height: 48,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : onGuardar,
+                style: ElevatedButton.styleFrom(backgroundColor: kVerdeBoton, foregroundColor: kBlanco, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 1),
+                child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: kBlanco, strokeWidth: 2.5)) : const Text('Guardar Cliente', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -573,18 +445,6 @@ class _FormularioRegistro extends StatelessWidget {
 }
 
 class _EtiquetaCampo extends StatelessWidget {
-  final String texto;
-  const _EtiquetaCampo({required this.texto});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      texto,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF424242),
-      ),
-    );
-  }
+  final String texto; const _EtiquetaCampo({required this.texto});
+  @override Widget build(BuildContext context) { return Text(texto, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF616161))); }
 }
