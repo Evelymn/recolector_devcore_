@@ -5,20 +5,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-<<<<<<< HEAD
 import 'package:fl_chart/fl_chart.dart'; 
-
 import '../widgets/menulateral.dart';
 import 'reportes_page.dart';  
 import 'usuarios_page.dart';  
 import 'empleados_page.dart'; 
 import 'pagos_page.dart';     
 import 'configuracion_page.dart'; 
-=======
-import '../widgets/menulateral.dart';
-import 'reportes_page.dart'; // Tu tabla
-import 'usuarios_page.dart'; // La lista de tu compañero
->>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
+
 
 const Color kVerdePrincipal = Color(0xFF2E7D32);
 const Color kVerdeBoton = Color(0xFF388E3C);
@@ -48,7 +42,6 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
 
   final SupabaseClient _supabase = Supabase.instance.client;
 
-<<<<<<< HEAD
   // Variables para las estadísticas reales
   int _totalClientes = 0;
   double _ingresosMes = 0.0;
@@ -72,8 +65,6 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
     _telefonoController.dispose();
     super.dispose();
   }
-
-<<<<<<< HEAD
   // --- FUNCIÓN MÁGICA PARA LEER ESTADÍSTICAS REALES ---
   Future<void> _cargarEstadisticas() async {
     try {
@@ -96,7 +87,7 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
       }
     } catch (e) {
       debugPrint('Error al cargar estadísticas: $e');
-=======
+
   @override
   void initState() {
     super.initState();
@@ -117,7 +108,7 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
       setState(() {});
     } catch (e) {
       debugPrint('Error: $e');
->>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
+
     }
   }
 
@@ -143,9 +134,9 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
         ),
       );
       _limpiarFormulario();
-<<<<<<< HEAD
+
       _cargarEstadisticas(); // <--- Actualizamos los números después de guardar
-=======
+
       await _cargarEstadisticas();
     } on PostgrestException catch (e) {
       if (!mounted) return;
@@ -156,7 +147,7 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
           behavior: SnackBarBehavior.floating,
         ),
       );
->>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
+
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -191,12 +182,11 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
     );
   }
 
-<<<<<<< HEAD
-=======
+
   // ─────────────────────────────────────────────────────────
   // AQUÍ ESTÁ EL SWITCH MÁGICO
   // ─────────────────────────────────────────────────────────
->>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
+
   Widget _obtenerVistaActual() {
     switch (_menuSeleccionado) {
       case 0: return _buildContenidoDashboard(); 
@@ -226,12 +216,11 @@ class _DashboardRegistrarClienteState extends State<DashboardRegistrarCliente> {
           Expanded(
             child: Column(
               children: [
-<<<<<<< HEAD
                 const _AppBarPersonalizado(),
-=======
+
                 _AppBarPersonalizado(),
                 // AQUÍ INYECTAMOS LA VISTA DINÁMICA
->>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
+
                 Expanded(child: _obtenerVistaActual()),
               ],
             ),
@@ -311,9 +300,8 @@ class _AppBarPersonalizado extends StatelessWidget {
       height: 60, color: kBlanco, padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-<<<<<<< HEAD
+
           Container(width: 38, height: 38, decoration: const BoxDecoration(color: kVerdeClaro, shape: BoxShape.circle), child: const Icon(Icons.recycling, color: kVerdePrincipal, size: 20)),
-=======
           Container(
             width: 38,
             height: 38,
@@ -327,7 +315,6 @@ class _AppBarPersonalizado extends StatelessWidget {
               size: 20,
             ),
           ),
->>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
           const SizedBox(width: 10),
           const Text('EcoRecolector', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF212121))),
           const Spacer(),
@@ -345,7 +332,6 @@ class _ColumnaIzquierda extends StatelessWidget {
   final int clientesActivos;
   final int clientesInactivos;
   final VoidCallback onRegistrarTap;
-<<<<<<< HEAD
   final String totalClientes;
   final String ingresosMes;
 
@@ -353,14 +339,11 @@ class _ColumnaIzquierda extends StatelessWidget {
     required this.onRegistrarTap,
     required this.totalClientes,
     required this.ingresosMes,
-=======
-
   const _ColumnaIzquierda({
     required this.totalClientes,
     required this.clientesActivos,
     required this.clientesInactivos,
     required this.onRegistrarTap,
->>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
   });
 
   @override
@@ -374,8 +357,6 @@ class _ColumnaIzquierda extends StatelessWidget {
             children: [TextSpan(text: 'Bienvenido, '), TextSpan(text: 'Administrador', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)))],
           ),
         ),
-<<<<<<< HEAD
-=======
         const SizedBox(height: 16),
         _TarjetaEstadistica(
 
@@ -398,7 +379,6 @@ class _ColumnaIzquierda extends StatelessWidget {
           icono: Icons.person_off_outlined,
           colorIcono: Colors.orange,
         ),
->>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
         const SizedBox(height: 20),
         Row(
           children: [
@@ -539,7 +519,6 @@ class _FormularioRegistro extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-<<<<<<< HEAD
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const _EtiquetaCampo(texto: 'Teléfono'), const SizedBox(height: 8), TextFormField(controller: telefonoController, decoration: inputDecoration('Ej. 5555-0000'), keyboardType: TextInputType.phone, validator: (v) => (v == null || v.trim().isEmpty) ? 'Obligatorio' : null)])),
                 const SizedBox(width: 16),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const _EtiquetaCampo(texto: 'Estado'), const SizedBox(height: 8), DropdownButtonFormField<String>(value: estadoSeleccionado, decoration: inputDecoration(''), items: const [DropdownMenuItem(value: 'Activo', child: Text('Activo')), DropdownMenuItem(value: 'Inactivo', child: Text('Inactivo'))], onChanged: onEstadoChanged, validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null)])),
@@ -552,7 +531,6 @@ class _FormularioRegistro extends StatelessWidget {
                 onPressed: isLoading ? null : onGuardar,
                 style: ElevatedButton.styleFrom(backgroundColor: kVerdeBoton, foregroundColor: kBlanco, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 1),
                 child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: kBlanco, strokeWidth: 2.5)) : const Text('Guardar Cliente', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-=======
                 const Text(
                   'Dashboard/\nRegistrar cliente',
                   style: TextStyle(
@@ -681,7 +659,6 @@ class _FormularioRegistro extends StatelessWidget {
                             ),
                           ),
                 ),
->>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
               ),
             ),
           ],
@@ -692,11 +669,9 @@ class _FormularioRegistro extends StatelessWidget {
 }
 
 class _EtiquetaCampo extends StatelessWidget {
-<<<<<<< HEAD
   final String texto; const _EtiquetaCampo({required this.texto});
   @override Widget build(BuildContext context) { return Text(texto, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF616161))); }
 }
-=======
   final String texto;
   const _EtiquetaCampo({required this.texto});
 
@@ -712,4 +687,3 @@ class _EtiquetaCampo extends StatelessWidget {
     );
   }
 }
->>>>>>> 6802fe0871ccd1784d1f35e23eec2450d8a59e8c
